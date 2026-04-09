@@ -1,4 +1,5 @@
 <template>
+    <!-- 推荐歌单 -->
     <div class="hall-wrapper">
         <div class="hall-inner">
             <h2 class="section-title">推荐歌单</h2>
@@ -13,6 +14,19 @@
                     </div>
                 </li>
             </ul>
+            <!-- 推荐新音乐 -->
+            <h2 class="section-title section-title--sub">推荐新音乐</h2>
+            <ul class="song-list">
+                <li class="song-item" v-for="song in newSongs" :key="song.id">
+                    <div class="song-cover">
+                        <img :src="song.cover" :alt="song.name">
+                    </div>
+                    <div class="song-info">
+                        <p class="song-name">{{ song.name }}</p>
+                        <p class="song-artist">{{ song.artist }}</p>
+                    </div>
+                </li>
+            </ul>
         </div>
     </div>
 </template>
@@ -22,7 +36,8 @@ import {get} from "@/utils/http"
 import { ref, onMounted } from 'vue';
 //推荐歌单
 const playlists = ref([])
-
+//推荐新音乐
+const newSongs = ref([])
 const fetchPlaylists = async () => {
     try {
         const res = await get("/personalized", { limit: 5 })
@@ -32,13 +47,26 @@ const fetchPlaylists = async () => {
             desc: item.copywriter || "",
             cover: item.picUrl
         })) 
-        console.log(playlists.value)
     } catch(error) {
         console.log("获取推荐歌单失败：",error)
     }
 }
+const fetchNewSongs = async () => {
+    try {
+        const res = await get("/personalized/newsong")
+        newSongs.value = (res.result || []).map(item => ({
+            id: item.id,
+            name: item.name,
+            cover: item.picUrl,
+            artist: item.song?.artists?.map(item => item.name).join("/") || ""
+        }))
+    } catch (error) {
+        console.log("推荐新音乐失败：", error)
+    }
+}
 onMounted(() => {
     fetchPlaylists()
+    fetchNewSongs()
 })
 </script>
 
