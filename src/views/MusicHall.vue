@@ -1,7 +1,7 @@
 <template>
-    <!-- 推荐歌单 -->
     <div class="hall-wrapper">
         <div class="hall-inner">
+            <!-- 推荐歌单 -->
             <h2 class="section-title">推荐歌单</h2>
             <ul class="playlist-list">
                 <li v-for="item in playlists" :key="item.id" class="playlist-item">
@@ -27,17 +27,66 @@
                     </div>
                 </li>
             </ul>
+            <!-- 歌手轮播图 -->
+            <h2 class="section-title section-title--sub section-title--singer">歌手榜单</h2>
+            <div class="singer-carousel" v-if="singerSlides.length">
+                <div class="singer-carousel-track">
+                    <div v-for="(slide, index) in singerSlides" :key="index" class="singer-slide"
+                        v-show="index === currentSingerSlide">
+                        <ul class="singer-list">
+                            <li v-for="singer in slide" :key="singer.id" class="singer-item">
+                                <div class="singer-avatar">
+                                    <img :src="singer.avatar" :alt="singer.name">
+                                </div>
+                                <span class="singer-name">{{ singer.rank }} {{ singer.name }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- 左右按钮 -->
+                <div class="singer-carousel-controls" v-if="singerSlides.length > 1">
+                    <button class="singer-arrow" @click="prevSingerSlide">‹</button>
+                    <button class="singer-arrow" @click="nextSingerSlide">›</button>
+                </div>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup>
 import {get} from "@/utils/http"
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 //推荐歌单
 const playlists = ref([])
 //推荐新音乐
 const newSongs = ref([])
+//歌手榜单
+const singerRank = ref([])
+//当前歌手榜单轮播图索引
+const currentSingerSlide = ref(0)
+//每页轮播图固定展示的数据条数
+const SINGER_PAGE_SIZE = 5
+//获取每页轮播图的歌手榜单数据
+const singerSlides = computed(() => {
+    const list = singerRank.value
+    const slides = []
+    for (let i = 0; i < list.length; i += SINGER_PAGE_SIZE) {
+        slides.push(list.slice(i, i + SINGER_PAGE_SIZE))
+    }
+    return slides
+})
+//处理轮播图向左点击按钮事件
+const prevSingerSlide = () => {
+    if (!singerSlides.value.length) return
+    //负数直接取余会出现问题，所以再加上轮播图总页数
+    currentSingerSlide.value = (currentSingerSlide.value - 1 + singerSlides.value.length) % singerSlides.value.length
+}
+//处理轮播图向右点击按钮事件
+const nextSingerSlide = () => {
+    if (!singerSlides.value.length) return
+    currentSingerSlide.value = (currentSingerSlide.value + 1) % singerSlides.value.length
+}
+//获取推荐歌单
 const fetchPlaylists = async () => {
     try {
         const res = await get("/personalized", { limit: 5 })
@@ -51,6 +100,7 @@ const fetchPlaylists = async () => {
         console.log("获取推荐歌单失败：",error)
     }
 }
+//获取新音乐
 const fetchNewSongs = async () => {
     try {
         const res = await get("/personalized/newsong")
@@ -61,12 +111,28 @@ const fetchNewSongs = async () => {
             artist: item.song?.artists?.map(item => item.name).join("/") || ""
         }))
     } catch (error) {
-        console.log("推荐新音乐失败：", error)
+        console.log("获取推荐新音乐失败：", error)
     }
 }
+//获取歌手榜单
+const fetchSingerRank = async () => {
+    try {
+        const res = await get("/top/artists", {limit: 20})
+        singerRank.value = (res.artists || []).map((item, index) => ({
+            id: item.id,
+            name: item.name,
+            rank: index + 1,
+            avatar: item.picUrl
+        }))
+    } catch (error) {
+        console.log("获取歌手榜单失败：", error)
+    }
+}
+//页面挂载结束后立即调用
 onMounted(() => {
     fetchPlaylists()
     fetchNewSongs()
+    fetchSingerRank()
 })
 </script>
 
