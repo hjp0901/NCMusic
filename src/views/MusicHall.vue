@@ -4,7 +4,7 @@
             <!-- 推荐歌单 -->
             <h2 class="section-title">推荐歌单</h2>
             <ul class="playlist-list">
-                <li v-for="item in playlists" :key="item.id" class="playlist-item">
+                <li v-for="item in playlists" :key="item.id" class="playlist-item" @click="handlePlayListClick(item.id)">
                     <div class="cover-wrapper">
                         <img :src="item.cover" :alt="item.title">
                     </div>
@@ -56,6 +56,9 @@
 <script setup>
 import {get} from "@/utils/http"
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from "vue-router";
+import MusicList from "./MusicList.vue";
+const router = useRouter()
 //推荐歌单
 const playlists = ref([])
 //推荐新音乐
@@ -127,6 +130,14 @@ const fetchSingerRank = async () => {
     } catch (error) {
         console.log("获取歌手榜单失败：", error)
     }
+}
+//处理点击推荐歌单后的跳转事件，并且携带ID到音乐列表页面
+const handlePlayListClick = (id) => {
+    if (!id) return
+    router.push({
+        name: 'musiclist',
+        query: {id}
+    })
 }
 //页面挂载结束后立即调用
 onMounted(() => {
