@@ -5,8 +5,7 @@
             <div v-if="loading" class="tip">歌曲加载中...</div>
             <div v-else-if="!tracks.length" class="tip">暂无歌曲</div>
             <ul v-else class="track-list">
-                <li v-for="(track, index) in tracks" :key="track.id" class="track-item"
-                    @click="handlePlaySong(track.id)">
+                <li v-for="(track, index) in tracks" :key="track.id" class="track-item" @click="handlePlaySong(track.id)">
                     <span class="track-index">{{ index + 1 }}</span>
                     <div class="track-main">
                         <span class="track-name">{{ track.name }}</span>
@@ -24,9 +23,10 @@
 
 <script setup>
 import { computed,ref,onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute,useRouter } from 'vue-router';
 import {get} from "@/utils/http"
 const route = useRoute()
+const router = useRouter()
 //推荐歌单ID
 const playListId = computed(() => route.query.id)
 //推荐歌单名称
@@ -67,6 +67,13 @@ const formatDuration = (ms) => {
     const m = Math.floor(totalSec / 60)
     const s = totalSec % 60
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+}
+//点击跳转到音乐播放页面，并携带参数id
+const handlePlaySong = (id) => {
+    router.push({
+        name: "player",
+        query: {id}
+    })
 }
 //页面挂载后立即调用
 onMounted(() => {
