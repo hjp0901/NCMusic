@@ -45,7 +45,6 @@ const fetchPlayListDetail = async () => {
         const detail = res.playlist
         if (detail) {
             playListName.value = detail.name || "歌单"
-            console.log(playListName.value)
             tracks.value = detail.tracks?.map(item => ({
                 id: item.id,
                 name: item.name,
