@@ -16,8 +16,38 @@
                     </div>
                 </div>
                 <!-- 右侧：歌词 -->
-                 <!-- 底部：控制区 -->
+                <div class="player-right">
+                    <div class="lyrics-card">
+                        <h3 class="lyrics-title">歌词</h3>
+                        <div class="lyrics-content">
+                            <template v-if="lyrics.length">
+                                <p v-for="(line, index) in lyrics" :key="index"
+                                    :class="{ 'lyrics-line--highlight': index === 0 }" class="lyrics-line">
+                                    {{ line }}
+                                </p>
+                            </template>
+                            <p v-else class="lyrics-line">暂无歌词</p>
+                        </div>
+                    </div>
+                </div>
             </div>
+            <!-- 底部：控制区 -->
+            <!-- <div class="player-controls">
+                <div class="controls-main">
+                    <button class="btn-circle btn-large" @click="handleTogglePlay">{{ isPlaying ? '⏸' : '▶' }}</button>
+                </div>
+                <div class="progress-wrap">
+                    <span class="time-label">{{ formatTime(currentTime) }}</span>
+                    <div class="progress-bar" @click="handleProgressClick">
+                        <div class="progress-inner"
+                            :style="{ width: duration ? `${(currentTime / duration) * 100}%` : '0%' }"></div>
+                    </div>
+                    <span class="time-label">{{ formatTime(duration) }}</span>
+                </div>
+                <audio :src="audioUrl" v-if="audioUrl" ref="audioRef" class="audio-hidden"
+                    @loadedmetadata="handleLoadedMetadata" @timeupdate="handleTimeUpdate"
+                    @ended="handleAudioEnded"></audio>
+            </div> -->
         </div>
     </div>
 </template>
@@ -30,6 +60,8 @@ import {get} from "@/utils/http"
 const route = useRoute()
 //歌曲ID
 const songId = computed(() => route.query.id)
+//歌曲歌词
+const lyrics = ref([])
 // 歌曲信息
 const songTitle = ref("正在播放的歌曲")
 const songArtist = ref("歌手姓名")
@@ -55,9 +87,37 @@ const fetchSongDetail = async (id) => {
         songCover.value = "https://via.placeholder.com/260x260.png?text=Cover"
     }
 }
+// 解析歌词
+const parseLyric = (raw = '') => {
+    return raw.split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line)
+        .map((line) => {
+            // 去掉歌词里的时间标签 例如：[00:12.34]  但是有些歌词里面只有时间标签
+            const text = line.replace(/^\[[^\]]*]/g, '').trim()
+            //这里的代码我之前写的是：return text || '' 但是这么写的话如果是歌词只有时间标签的情况下，最终实际上处理完return的还是时间标签
+            return text || null
+        })
+        .filter(text => text !==null) //所以这里通过再次调用filter函数把只有时间标签的歌词过滤掉
+}
+
+// 获取歌词
+const fetchLyric = async (id) => {
+    if (!id) return
+    try {
+        const res = await get("/lyric", { id })
+        const raw = res.lrc?.lyric || ''
+        console.log(raw)
+        lyrics.value = parseLyric(raw)
+    } catch (err) {
+        console.log("获取歌词失败", err);
+        lyrics.value = []
+    }
+}
 //页面挂载结束后立即调用
 onMounted(() => {
     fetchSongDetail(songId.value)
+    fetchLyric(songId.value)
 })
 </script>
 
