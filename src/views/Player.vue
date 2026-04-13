@@ -32,7 +32,7 @@
                 </div>
             </div>
             <!-- 底部：控制区 -->
-            <!-- <div class="player-controls">
+            <div class="player-controls">
                 <div class="controls-main">
                     <button class="btn-circle btn-large" @click="handleTogglePlay">{{ isPlaying ? '⏸' : '▶' }}</button>
                 </div>
@@ -47,7 +47,7 @@
                 <audio :src="audioUrl" v-if="audioUrl" ref="audioRef" class="audio-hidden"
                     @loadedmetadata="handleLoadedMetadata" @timeupdate="handleTimeUpdate"
                     @ended="handleAudioEnded"></audio>
-            </div> -->
+            </div>
         </div>
     </div>
 </template>
@@ -60,13 +60,28 @@ import {get} from "@/utils/http"
 const route = useRoute()
 //歌曲ID
 const songId = computed(() => route.query.id)
+
+//audio标签
+const audioRef = ref(null)
+
 //歌曲歌词
 const lyrics = ref([])
+
 // 歌曲信息
 const songTitle = ref("正在播放的歌曲")
 const songArtist = ref("歌手姓名")
 const songAlbum = ref("专辑名称")
 const songCover = ref("https://via.placeholder.com/260x260.png?text=Cover")
+
+// 音乐播放地址
+const audioUrl = ref('')
+//音乐播放当前时间
+const currentTime = ref(0)
+//音乐总时长
+const duration = ref(0)
+//音乐是否正在播放
+const isPlaying = ref(false)
+
 // 获取歌曲详情
 const fetchSongDetail = async (id) => {
     if (!id) return
@@ -87,6 +102,7 @@ const fetchSongDetail = async (id) => {
         songCover.value = "https://via.placeholder.com/260x260.png?text=Cover"
     }
 }
+
 // 解析歌词
 const parseLyric = (raw = '') => {
     return raw.split("\n")
@@ -114,10 +130,103 @@ const fetchLyric = async (id) => {
         lyrics.value = []
     }
 }
+
+// 获取播放地址
+const fetchSongUrl = async (id) => {
+    if (!id) return
+    try {
+        const res = await get("/song/url", { id })
+        const item = (res.data || [])[0]
+        audioUrl.value = item?.url || ''
+        currentTime.value = 0
+        duration.value = 0
+        isPlaying.value = false
+    } catch (err) {
+        console.log("获取歌曲播放地址失败", err);
+        audioUrl.value = ""
+        isPlaying.value = false
+    }
+}
+
+// 加载歌曲元数据  当浏览器成功获取到音频的 ** 基础信息（元数据）** 时触发
+const handleLoadedMetadata = () => {
+    const audio = audioRef.value
+    if (!audio) return
+    duration.value = audio.duration || 0
+    currentTime.value = audio.currentTime || 0
+}
+
+// 格式化时间
+const formatTime = (sec) => {
+    if (!sec || !Number.isFinite(sec)) return "00:00"
+    const s = Math.floor(sec)
+    const m = Math.floor(s / 60)
+    const rs = s % 60
+    const mm = m.toString().padStart(2, "0")
+    const ss = rs.toString().padStart(2, "0")
+    return `${mm}:${ss}`
+}
+
+// 播放音乐事件
+const handleTogglePlay = () => {
+    const audio = audioRef.value
+    if (!audio || !audioUrl.value) return
+    if (audio.paused) {
+        audio.play().then(() => {
+            isPlaying.value = true
+        }).catch(() => { })
+    } else {
+        audio.pause()
+        isPlaying.value = false
+    }
+}
+
+// 歌曲播放结束
+const handleAudioEnded = () => {
+    isPlaying.value = false
+}
+
+// 歌曲播放时间更新
+const handleTimeUpdate = () => {
+    const audio = audioRef.value
+    if (!audio) return
+    currentTime.value = audio.currentTime || 0
+    // timeupdate 事件触发非常频繁（一秒几十次）
+    // 音频刚加载时，duration 还是 NaN
+    // 如果不判断，总时长会先显示 NaN，再闪成正确时间
+    // 加了判断，只有拿到有效时长才更新，不会出现 NaN
+    if (audio.duration) {
+        duration.value = audio.duration
+    }
+}
+
+//处理进度条点击事件
+const handleProgressClick = (event) => {
+    //获取绑定了点击事件的进度条DOM元素
+    const bar = event.currentTarget
+    //getBoundingClientRect() → 获取元素在页面中的位置和尺寸信息
+    // rect.left：进度条左边距离屏幕左侧的距离
+    // rect.width：进度条总宽度
+    const rect = bar.getBoundingClientRect()
+    // event.clientX:用户点击位置距离屏幕左侧的坐标
+    //计算点击位置百分比
+    const ratio = (event.clientX - rect.left) / rect.width
+    const audio = audioRef.value
+    //拿到要跳转的新时间
+    const newTime = duration.value * ratio
+    //如果audio元素还没加载出来，直接退出函数
+    if (!audio) return
+    //修改 currentTime 一定会触发 timeupdate
+    audio.currentTime = newTime
+    //同步更新 Vue 响应式数据，保证视图和播放状态一致
+    currentTime.value = newTime
+}
+
 //页面挂载结束后立即调用
 onMounted(() => {
     fetchSongDetail(songId.value)
     fetchLyric(songId.value)
+    fetchSongUrl(songId.value)
 })
 </script>
 
