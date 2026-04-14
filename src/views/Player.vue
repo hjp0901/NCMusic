@@ -393,7 +393,7 @@ onMounted(() => {
 }
 
 .lyrics-line--highlight {
-    color: #ffffff;
+    color: skyblue;
     font-size: 18px;
     font-weight: 600;
     transform: scale(1.20);
