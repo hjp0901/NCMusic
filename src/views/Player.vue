@@ -123,7 +123,6 @@ const fetchLyric = async (id) => {
     try {
         const res = await get("/lyric", { id })
         const raw = res.lrc?.lyric || ''
-        console.log(raw)
         lyrics.value = parseLyric(raw)
     } catch (err) {
         console.log("获取歌词失败", err);
