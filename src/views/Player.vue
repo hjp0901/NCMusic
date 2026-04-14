@@ -64,9 +64,14 @@ const songId = computed(() => route.query.id)
 //audio标签
 const audioRef = ref(null)
 
-//歌曲歌词
+//用于渲染的歌曲歌词
 const lyrics = ref([])
 
+//用于做歌词滚动的歌曲歌词
+const lyricList = ref([])
+
+//当前歌曲高亮到哪一句
+let currentIndex = ref(-1)
 // 歌曲信息
 const songTitle = ref("正在播放的歌曲")
 const songArtist = ref("歌手姓名")
@@ -103,7 +108,7 @@ const fetchSongDetail = async (id) => {
     }
 }
 
-// 解析歌词
+// 解析歌词:用于歌词的渲染
 const parseLyric = (raw = '') => {
     return raw.split("\n")
         .map((line) => line.trim())
@@ -123,13 +128,51 @@ const fetchLyric = async (id) => {
     try {
         const res = await get("/lyric", { id })
         const raw = res.lrc?.lyric || ''
+        lyricList.value = parseLyricScroll(raw)
         lyrics.value = parseLyric(raw)
+       // console.log(rawLyrics.value)
+         console.log(raw)
+        // console.log(lyrics.value)
     } catch (err) {
         console.log("获取歌词失败", err);
         lyrics.value = []
     }
 }
+// 解析歌词：把字符串变成 [{time, text}]，用于做歌词滚动效果
+function parseLyricScroll(str) {
+    const lines = str.split('\n'); // 按换行切成数组
+     return lines.filter(line => line.trim()).map(line => {
+         const timeText = line.split(']');
+         const time = timeText[0].replace('[', ''); // 拿到 00:05.00
+         const text = timeText[1].trim(); // 拿到歌词文字
+         const [min, sec] = time.split(':');
+         const totalSec = parseFloat(min) * 60 + parseFloat(sec); // 转成秒数
+         return { time: totalSec, text: text };
+     }).filter(item => item.text !== '')
+}
 
+function updateLyric(currentTime) {
+    // 找到当前时间对应的歌词
+    const index = lyricList.value.findLastIndex(item => item.time <= currentTime);
+
+    if (index === -1 || index === currentIndex) return;
+
+    currentIndex = index;
+
+    // 去掉所有高亮
+    const allP = document.querySelectorAll('.lyrics-content p');
+    allP.forEach(p => p.classList.remove('lyrics-line--highlight'));
+
+    // 给当前句加高亮
+    allP[index].classList.add('lyrics-line--highlight');
+
+    // 自动滚动（最简单的滚动方法）
+    const currentP = allP[index];
+    currentP.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+    });
+}
 // 获取播放地址
 const fetchSongUrl = async (id) => {
     if (!id) return
@@ -197,6 +240,8 @@ const handleTimeUpdate = () => {
     if (audio.duration) {
         duration.value = audio.duration
     }
+    //console.log(audio.currentTime)
+    updateLyric(audio.currentTime)
 }
 
 //处理进度条点击事件
@@ -351,7 +396,7 @@ onMounted(() => {
     color: #ffffff;
     font-size: 18px;
     font-weight: 600;
-    transform: scale(1.02);
+    transform: scale(1.20);
 }
 
 .lyrics-content::-webkit-scrollbar {
