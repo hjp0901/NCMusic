@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import {get} from "@/utils/http"
+import { get } from '@/utils/http'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -18,7 +18,6 @@ const handleOverlayClick = (event) => {
         router.push('/')
     }
 }
-
 // 获取二维码登录的 key
 const fetchLoginKey = async () => {
     try {
@@ -98,7 +97,7 @@ const startQrCheck = (key) => {
                 } catch (e) {
                     console.error('获取登录状态失败', e)
                 }
-                //只要用户授权成功我们就跳转到首页,不依赖获取用户信息接口
+
                 router.push('/')
             }
         } catch (err) {

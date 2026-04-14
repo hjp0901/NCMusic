@@ -1,11 +1,24 @@
 <script setup>
-import { RouterView } from 'vue-router'
-import { ref } from 'vue';
+import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { ref } from "vue"
+import { useUserStore } from "@/stores/user"
+
+const router = useRouter()
+const userStore = useUserStore()
+
+
+// 搜索内容
 const searchKeyword = ref('')
 const handleSearch = () => {
-    const res = searchKeyword.value.trim()
-    console.log(res)
+    
 }
+
+//用户点击退出登录
+const handleLogout = () => {
+    userStore.clearUser()
+    router.push("/")
+}
+
 </script>
 
 <template>
@@ -24,7 +37,19 @@ const handleSearch = () => {
                         <input type="text" class="search-input" placeholder="搜索歌曲/歌手/专辑" v-model="searchKeyword"
                             @keyup.enter="handleSearch">
                     </div>
-                    <RouterLink to="/login" class="login-btn">登录</RouterLink>
+                    <RouterLink v-if="!userStore.isLoggedIn" to="/login" class="login-btn">登录</RouterLink>
+                    <div v-else class="user-menu">
+                        <button class="user-avatar" type="button">
+                            <img :src="userStore.user?.avatar" alt="用户头像">
+                        </button>
+                        <div class="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <span class="user-name">{{ userStore.user?.nickname || '我的账号' }}</span>
+                            </div>
+                            <button class="user-dropdown-item" type="button" @click="handleLogout">退出登录</button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </header>
