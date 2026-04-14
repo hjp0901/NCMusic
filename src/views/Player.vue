@@ -6,7 +6,7 @@
                 <div class="player-left">
                     <div class="cover-wrap">
                         <div class="cover-disc">
-                            <img class="cover-img" :src="songCover" alt="封面">
+                            <img class="cover-img rotate" :src="songCover" alt="封面">
                         </div>
                     </div>
                     <div class="song-meta">
@@ -330,6 +330,26 @@ onMounted(() => {
     height: 100%;
     object-fit: cover;
     display: block;
+}
+
+.rotate {
+    /* 动画：名称 时长 线性 无限循环 */
+    animation: rotate 10s linear infinite;
+}
+
+.rotate:hover {
+    animation-play-state: paused;
+}
+
+/* 定义旋转动画 */
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .song-meta {
