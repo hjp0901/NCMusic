@@ -6,8 +6,15 @@ const service = axios.create({
 });
 //请求拦截器
 service.interceptors.request.use((config) => {
-    //统一处理token
-    return config
+//   统一处理token
+//   const token = localStorage.getItem("token");
+//   if (token) {
+//     // 后端一般要求格式：Bearer 空格 + Token
+//     config.headers["Authorization"] = "Bearer " + token;
+//     // 有些后端直接用 token: xxx
+//     // config.headers['token'] = token
+//   }
+  return config;
 }, (error) => Promise.reject(error))
 
 //相应拦截器
