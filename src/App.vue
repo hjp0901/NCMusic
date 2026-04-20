@@ -2,7 +2,6 @@
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { ref } from "vue"
 import { useUserStore } from "@/stores/user"
-
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -10,7 +9,14 @@ const userStore = useUserStore()
 // 搜索内容
 const searchKeyword = ref('')
 const handleSearch = () => {
-    
+    const keyword = searchKeyword.value.trim()
+    if (!keyword) return
+    router.push({
+        name: "search",
+        query: {
+            keyword
+        }
+    })
 }
 
 //用户点击退出登录
