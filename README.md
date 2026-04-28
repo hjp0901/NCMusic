@@ -1,38 +1,13 @@
-# NCMusic
-
-This template should help get you started developing with Vue 3 in Vite.
-
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-pnpm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-pnpm dev
-```
-
-### Compile and Minify for Production
-
-```sh
-pnpm build
-```
+# 简易版网易云音乐 Web 应用
+## 项目简介
+本项目为简易版网易云音乐 Web 复刻项目，依托第三方 Node.js 服务端提供网易云音乐接口支持。该服务一共提供两百余个音乐相关接口，本项目仅按需接入并使用十余项接口，完成简易网易云音乐Web端核心业务功能开发。
+## 技术栈
+Vue3 + vue-router 5.x + pnpm + pinia + JS + Vite + axios + 阿里云
+## 项目难点与亮点
+### 一、音乐播放页面及播放功能开发
+1.音乐播放模块整体分为三个部分开发。第一部分为歌曲信息介绍，包含歌曲名称、封面、作者等信息，仅需请求对应接口获取数据后完成页面渲染，开发难度较低。
+2.第二部分为歌词适配与展示功能。开发时需要通过歌曲 ID 请求对应的歌词数据，原始歌词数据格式杂乱，需要进行复杂的数据转换与解析处理。通过对原始歌词文本进行格式处理、时间戳解析、数据结构化转换，将原生字符串歌词处理为可用于页面渲染的结构化歌词数据，最终完成歌词页面渲染。同时实现了歌词核心交互效果，包含歌词逐句高亮、歌词播放时平滑滚动并自动居中的效果，提升播放页面交互体验。
+3.第三部分为歌曲播放功能，也是播放模块中开发难度较高的部分。播放功能基于 HTML5 audio 标签实现，开发前本人几乎没有使用过 audio 标签的开发经验，因此在开发过程中结合资料与 AI 辅助，从零学习 audio 标签相关属性、事件与使用方法，逐步完成歌曲播放、状态监听等核心播放功能的开发。通过该模块开发，熟练掌握了原生 audio 标签的业务落地使用方式。
+### 二、扫码登录功能开发
+1.由于网易云音乐官方新增安全云盾机制，手机、邮箱账号登录方式全部失效，因此本项目登录模块仅实现二维码扫码登录功能。
+2.二维码登录功能一共依赖四个核心接口，分别为二维码 key 生成接口、二维码生成接口、二维码扫码状态检测接口、获取用户信息接口。四个接口存在调用顺序依赖，开发过程中严格按照业务流程串行调用接口。首先调用接口生成二维码唯一 Key，将 Key 作为参数调用二维码生成接口，渲染登录二维码；随后持续轮询调用扫码状态接口，监听用户扫码、确认、过期等状态；当检测到用户扫码确认后，调用用户信息接口，获取用户账号数据，完成用户登录授权。同时针对每个接口的调用失败都做了对应的容错处理，保证登录功能稳定可用。
